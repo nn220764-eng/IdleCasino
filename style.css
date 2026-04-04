@@ -1,0 +1,439 @@
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Courier New', monospace;
+  background: #0d0d1a;
+  color: #e0e0e0;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── Header ── */
+.header {
+  background: #12122a;
+  border-bottom: 1px solid #2a2a4a;
+  padding: 10px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.header h1 {
+  font-size: 16px;
+  letter-spacing: 3px;
+  color: #ffd700;
+  text-transform: uppercase;
+}
+
+.coins-display {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.coins-label {
+  font-size: 10px;
+  color: #666;
+  letter-spacing: 1px;
+}
+
+#coins {
+  font-size: 30px;
+  color: #ffd700;
+  font-weight: bold;
+  font-variant-numeric: tabular-nums;
+  transition: color 0.2s;
+}
+
+#income-per-sec {
+  font-size: 11px;
+  color: #888;
+}
+
+/* ── Main layout ── */
+.main {
+  display: flex;
+  height: calc(100vh - 48px - 70px);
+}
+
+/* ── Game area ── */
+.games-area {
+  flex: 1;
+  padding: 14px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 12px;
+  overflow: auto;
+}
+
+/* ── Game card ── */
+.game-card {
+  background: #12122a;
+  border: 1px solid #1e1e3a;
+  border-radius: 6px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: border-color 0.3s;
+}
+
+.game-card:hover { border-color: #2a2a5a; }
+
+.game-card.locked {
+  opacity: 0.35;
+  border-style: dashed;
+  border-color: #1e1e3a;
+}
+
+.game-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #1e1e3a;
+  padding-bottom: 6px;
+}
+
+.game-name {
+  font-size: 13px;
+  color: #ffd700;
+  font-weight: bold;
+  letter-spacing: 1px;
+}
+
+.game-status {
+  font-size: 10px;
+  letter-spacing: 1px;
+}
+
+.game-status.running { color: #4caf50; }
+.game-status.locked-status { color: #444; }
+
+/* ── RTP meter ── */
+.rtp-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 10px;
+  color: #666;
+}
+
+.rtp-label { min-width: 22px; }
+
+.rtp-bar-bg {
+  flex: 1;
+  height: 5px;
+  background: #1a1a30;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.rtp-bar {
+  height: 100%;
+  background: #4caf50;
+  border-radius: 3px;
+  width: 0%;
+  transition: width 0.5s ease, background 0.5s ease;
+}
+
+.rtp-value {
+  color: #4caf50;
+  font-weight: bold;
+  min-width: 44px;
+  text-align: right;
+  font-size: 11px;
+}
+
+.rtp-delta {
+  font-size: 10px;
+  min-width: 36px;
+  text-align: right;
+  color: #666;
+}
+
+/* ── Game visual area ── */
+.game-visual {
+  flex: 1;
+  background: #090916;
+  border: 1px solid #1a1a2e;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 70px;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Blackjack cards */
+.cards-area {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: center;
+}
+
+.cards-label {
+  font-size: 9px;
+  color: #444;
+  letter-spacing: 1px;
+}
+
+.cards-row { display: flex; gap: 4px; }
+
+.card {
+  width: 26px;
+  height: 38px;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  color: #111;
+  font-weight: bold;
+  box-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+}
+
+.card.red { color: #cc0000; }
+.card.face-down { background: #1a3a6a; color: #1a3a6a; border-color: #2a4a8a; }
+
+/* Slots */
+.slots-display { display: flex; gap: 8px; }
+
+.slot-reel {
+  width: 40px;
+  height: 48px;
+  background: #111;
+  border: 1px solid #333;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  transition: filter 0.1s;
+}
+
+.slot-reel.spinning { filter: blur(1px); }
+
+/* Roulette */
+.roulette-display {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.roulette-wheel {
+  width: 52px;
+  height: 52px;
+  border: 3px solid #555;
+  border-radius: 50%;
+  background: repeating-conic-gradient(#900 0deg 9.7deg, #111 9.7deg 19.4deg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.5s ease;
+}
+
+.roulette-ball {
+  width: 8px;
+  height: 8px;
+  background: white;
+  border-radius: 50%;
+  box-shadow: 0 0 4px white;
+}
+
+.roulette-info { font-size: 10px; }
+.roulette-last { color: #aaa; }
+.roulette-last .red { color: #ff4444; }
+.roulette-last .black { color: #eee; }
+.roulette-last .green { color: #4caf50; }
+
+/* Locked game */
+.locked-content {
+  text-align: center;
+  color: #333;
+}
+
+.locked-icon { font-size: 28px; }
+.locked-text { font-size: 10px; margin-top: 4px; }
+
+/* ── Upgrade panel ── */
+.upgrade-panel {
+  width: 230px;
+  background: #12122a;
+  border-left: 1px solid #1e1e3a;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.upgrade-panel-header {
+  padding: 10px 12px 6px;
+  font-size: 10px;
+  color: #666;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  border-bottom: 1px solid #1e1e3a;
+  flex-shrink: 0;
+}
+
+#upgrade-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.upgrade-item {
+  background: #090916;
+  border: 1px solid #1e1e3a;
+  border-radius: 4px;
+  padding: 8px;
+  cursor: pointer;
+  transition: border-color 0.2s, opacity 0.2s;
+}
+
+.upgrade-item:hover:not(.disabled):not(.purchased) {
+  border-color: #ffd700;
+}
+
+.upgrade-item.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.upgrade-item.purchased {
+  opacity: 0.5;
+  cursor: default;
+  border-color: #2a4a2a;
+}
+
+.upgrade-name {
+  font-size: 11px;
+  color: #fff;
+  margin-bottom: 2px;
+  font-weight: bold;
+}
+
+.upgrade-desc {
+  font-size: 10px;
+  color: #666;
+  margin-bottom: 3px;
+}
+
+.upgrade-effect {
+  font-size: 10px;
+  color: #4caf50;
+  margin-bottom: 3px;
+}
+
+.upgrade-cost {
+  font-size: 11px;
+  color: #ffd700;
+  text-align: right;
+}
+
+.total-income {
+  padding: 8px 12px;
+  border-top: 1px solid #1e1e3a;
+  flex-shrink: 0;
+}
+
+.total-income-label {
+  font-size: 9px;
+  color: #444;
+  text-align: center;
+  letter-spacing: 1px;
+}
+
+.total-income-value {
+  font-size: 18px;
+  color: #ffd700;
+  text-align: center;
+  font-weight: bold;
+}
+
+/* ── Activity log ── */
+.log-area {
+  height: 70px;
+  background: #090916;
+  border-top: 1px solid #1a1a2e;
+  padding: 6px 16px;
+  overflow: hidden;
+  font-size: 10px;
+}
+
+.log-entry {
+  margin: 2px 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.log-entry .win { color: #4caf50; }
+.log-entry .lose { color: #f44336; }
+
+/* ── Offline modal ── */
+.offline-modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.75);
+  z-index: 100;
+  align-items: center;
+  justify-content: center;
+}
+
+.offline-modal.show { display: flex; }
+
+.offline-box {
+  background: #12122a;
+  border: 1px solid #ffd700;
+  border-radius: 8px;
+  padding: 28px 36px;
+  text-align: center;
+  max-width: 300px;
+}
+
+.offline-box h2 {
+  color: #ffd700;
+  font-size: 14px;
+  margin-bottom: 8px;
+  letter-spacing: 2px;
+}
+
+.offline-amount {
+  font-size: 32px;
+  color: #ffd700;
+  font-weight: bold;
+  margin: 12px 0;
+}
+
+.offline-box p { font-size: 11px; color: #888; margin-bottom: 16px; }
+
+.offline-btn {
+  background: #ffd700;
+  color: #000;
+  border: none;
+  padding: 8px 24px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: bold;
+  cursor: pointer;
+  letter-spacing: 1px;
+}
+
+.offline-btn:hover { background: #ffe040; }
+
+/* ── Scrollbar styling ── */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: #090916; }
+::-webkit-scrollbar-thumb { background: #2a2a4a; border-radius: 2px; }
