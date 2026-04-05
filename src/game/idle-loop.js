@@ -101,6 +101,11 @@ function rouletteTick() {
     : `ROULETTE LOSE ${result.houseNet} | ${result.number} ${result.color.toUpperCase()}`
   appendLog('roulette', label, houseWon, calcRTP('roulette'), rtpDelta('roulette'))
 
+  const lastEl = document.getElementById('roulette-last')
+  if (lastEl) {
+    lastEl.innerHTML = `Last: <span class="${result.color.toLowerCase()}">${result.number} ${result.color.toUpperCase()}</span>`
+  }
+
   maybeSave(serializeState())
   render(state, params)
 }
