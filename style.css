@@ -437,3 +437,27 @@ body {
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: #090916; }
 ::-webkit-scrollbar-thumb { background: #2a2a4a; border-radius: 2px; }
+
+/* ── Mobile layout ── */
+@media (max-width: 600px) {
+  .main {
+    flex-direction: column;
+    height: auto;
+  }
+
+  .games-area {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
+    height: auto;
+  }
+
+  .upgrade-panel {
+    width: 100%;
+    border-left: none;
+    border-top: 1px solid #1e1e3a;
+  }
+
+  #upgrade-list {
+    max-height: 300px;
+  }
+}
