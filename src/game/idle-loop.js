@@ -72,6 +72,8 @@ function bjTick() {
   render(state, params)
 }
 
+const SLOT_EMOJI = { '7': '7️⃣', 'B': '🎰', 'C': '🍒', 'L': '🍋', '_': '⬜' }
+
 function slotsTick() {
   const result = computeSpin({ bet: params.slots.bet, paytable: params.slots.paytable })
   addCoins(state, result.houseNet)
@@ -84,6 +86,11 @@ function slotsTick() {
     ? `SLOTS +${result.houseNet} | ${result.reels.join('')}`
     : `SLOTS ${result.houseNet} | ${result.reels.join('')}`
   appendLog('slots', label, houseWon, calcRTP('slots'), rtpDelta('slots'))
+
+  result.reels.forEach((id, i) => {
+    const el = document.getElementById(`reel-${i}`)
+    if (el) el.textContent = SLOT_EMOJI[id] ?? id
+  })
 
   maybeSave(serializeState())
   render(state, params)
