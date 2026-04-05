@@ -13,20 +13,21 @@
   <h1>♠ IDLE CASINO</h1>
   <div class="coins-display">
     <span class="coins-label">COINS</span>
-    <span id="coins">1,000</span>
+    <span id="coins">500</span>
     <span id="income-per-sec">+0 /s</span>
   </div>
 </div>
 
 <div class="main">
 
-  <!-- ── Game area: 2×2 grid ── -->
+  <!-- ── Game area ── -->
   <div class="games-area">
 
     <!-- Blackjack -->
     <div class="game-card" id="card-bj">
       <div class="game-header">
         <span class="game-name">♠ BLACKJACK</span>
+        <span id="table-count-bj" class="table-count">1台</span>
         <span class="game-status running">● AUTO</span>
       </div>
       <div class="rtp-row">
@@ -49,13 +50,15 @@
           </div>
         </div>
       </div>
+      <div id="table-actions-bj" class="table-actions"></div>
     </div>
 
     <!-- Slots -->
     <div class="game-card" id="card-slots">
       <div class="game-header">
         <span class="game-name">🎰 SLOTS</span>
-        <span class="game-status running">● AUTO</span>
+        <span id="table-count-slots" class="table-count"></span>
+        <span class="game-status locked-status">LOCKED</span>
       </div>
       <div class="rtp-row">
         <span class="rtp-label">RTP</span>
@@ -70,13 +73,15 @@
           <div class="slot-reel" id="reel-2">⬜</div>
         </div>
       </div>
+      <div id="table-actions-slots" class="table-actions"></div>
     </div>
 
     <!-- Roulette -->
     <div class="game-card" id="card-roulette">
       <div class="game-header">
         <span class="game-name">🎡 ROULETTE</span>
-        <span class="game-status running">● AUTO</span>
+        <span id="table-count-roulette" class="table-count"></span>
+        <span class="game-status locked-status">LOCKED</span>
       </div>
       <div class="rtp-row">
         <span class="rtp-label">RTP</span>
@@ -91,22 +96,23 @@
           </div>
           <div class="roulette-info">
             <div class="roulette-last" id="roulette-last">Last: —</div>
-            <div style="font-size:9px;color:#333;margin-top:2px" id="roulette-status">spinning...</div>
+            <div style="font-size:9px;color:#333;margin-top:2px" id="roulette-status">waiting...</div>
           </div>
         </div>
       </div>
+      <div id="table-actions-roulette" class="table-actions"></div>
     </div>
 
-    <!-- Locked: Baccarat -->
+    <!-- Baccarat — Phase 2 -->
     <div class="game-card locked" id="card-baccarat">
       <div class="game-header">
-        <span class="game-name">🔒 BACCARAT</span>
-        <span class="game-status locked-status">LOCKED</span>
+        <span class="game-name">🃏 BACCARAT</span>
+        <span class="game-status locked-status">COMING SOON</span>
       </div>
       <div class="game-visual">
         <div class="locked-content">
           <div class="locked-icon">🔒</div>
-          <div class="locked-text">100,000 coins で解放</div>
+          <div class="locked-text">Phase 2 で実装予定</div>
         </div>
       </div>
     </div>
@@ -142,21 +148,19 @@
 </div>
 
 <script type="module">
-  import { init, state, params, buyUpgrade } from './src/game/idle-loop.js'
-  import { render, appendLog } from './src/ui/render.js'
+  import { init, state } from './src/game/idle-loop.js'
 
-  // Patch idle-loop to show offline modal instead of inline log
-  const _origInit = init
+  // Offline income modal
+  let _lastHiddenTime = null
 
-  // Show offline modal
   function showOfflineModal(earned, elapsedSec) {
-    const modal = document.getElementById('offline-modal')
+    const modal  = document.getElementById('offline-modal')
     const amount = document.getElementById('offline-amount')
-    const time = document.getElementById('offline-time')
-    const btn = document.getElementById('offline-btn')
+    const time   = document.getElementById('offline-time')
+    const btn    = document.getElementById('offline-btn')
 
     amount.textContent = `+${earned.toLocaleString()} coins`
-    const hours = Math.floor(elapsedSec / 3600)
+    const hours   = Math.floor(elapsedSec / 3600)
     const minutes = Math.floor((elapsedSec % 3600) / 60)
     time.textContent = hours > 0
       ? `${hours}時間${minutes}分 の収益`
@@ -166,91 +170,17 @@
     btn.onclick = () => modal.classList.remove('show')
   }
 
-  // Patch visibilitychange for modal (override the one in idle-loop.js)
-  // Since idle-loop.js registers its own handler, we add ours too
-  // The modal fires in addition to the income already being applied in idle-loop.js
-  let _lastHiddenTime = null
-
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) {
       _lastHiddenTime = Date.now()
     } else if (_lastHiddenTime) {
       const elapsedSec = (Date.now() - _lastHiddenTime) / 1000
       if (elapsedSec >= 30) {
-        // Rough estimate for modal display (actual amount already applied in idle-loop.js)
         const earned = Math.floor(elapsedSec * state.coinsPerSec)
         if (earned > 0) showOfflineModal(earned, elapsedSec)
       }
       _lastHiddenTime = null
     }
-  })
-
-  // Update slot reels visually on each tick
-  // Hook into render by patching appendLog
-  const _origAppendLog = appendLog
-  function patchedAppendLog(game, message, won, rtpValue, rtpDelta) {
-    appendLog(game, message, won, rtpValue, rtpDelta)
-
-    // Update roulette last result display
-    if (game === 'roulette') {
-      const lastEl = document.getElementById('roulette-last')
-      if (lastEl) {
-        const match = message.match(/\| (\d+) (\w+)$/)
-        if (match) {
-          const [, num, color] = match
-          lastEl.innerHTML = `Last: <span class="${color.toLowerCase()}">${num} ${color}</span>`
-        }
-      }
-    }
-
-    // Update income panel
-    const panel = document.getElementById('income-per-sec-panel')
-    if (panel) panel.textContent = `+${state.coinsPerSec.toFixed(1)} /s`
-  }
-
-  // Patch slot reels: we need to intercept slot ticks
-  // The simplest approach: poll state and update DOM
-  function updateSlotReels(reels) {
-    const emojiMap = { '7': '7️⃣', 'B': '🎰', 'C': '🍒', 'L': '🍋', '_': '⬜' }
-    for (let i = 0; i < 3; i++) {
-      const el = document.getElementById(`reel-${i}`)
-      if (el && reels[i]) {
-        el.textContent = emojiMap[reels[i]] ?? reels[i]
-      }
-    }
-  }
-
-  // Intercept slot results via MutationObserver on log
-  // (Cleaner: we monkey-patch appendLog in the global scope via ES module re-export trick)
-  // Simpler approach: subscribe to log changes
-  const logObserver = new MutationObserver(() => {
-    const log = document.getElementById('log-entries')
-    if (!log) return
-    const first = log.querySelector('.log-entry')
-    if (!first) return
-    const text = first.textContent
-    // Extract slot reels from log entry: "SLOTS +N | 🍒🍋⬜"
-    if (text.includes('SLOTS')) {
-      const match = text.match(/\| ([\S]+)/)
-      if (match) {
-        // The reel display is emoji strings — map back
-        const emojiMap = { '7️⃣': '7', '🎰': 'B', '🍒': 'C', '🍋': 'L', '⬜': '_' }
-        // reels are already in the log as joined emoji — we can just use them
-        const reelStr = match[1]
-        // Split by known emoji (greedy match)
-        const reels = [...reelStr.matchAll(/7️⃣|🎰|🍒|🍋|⬜/g)].map(m => m[0])
-        if (reels.length === 3) {
-          for (let i = 0; i < 3; i++) {
-            const el = document.getElementById(`reel-${i}`)
-            if (el) el.textContent = reels[i]
-          }
-        }
-      }
-    }
-  })
-
-  logObserver.observe(document.getElementById('log-entries') || document.body, {
-    childList: true, subtree: true,
   })
 
   init()

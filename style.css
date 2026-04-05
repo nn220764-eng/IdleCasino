@@ -96,6 +96,15 @@ body {
   align-items: center;
   border-bottom: 1px solid #1e1e3a;
   padding-bottom: 6px;
+  gap: 6px;
+}
+
+.table-count {
+  font-size: 10px;
+  color: #888;
+  letter-spacing: 1px;
+  margin-right: auto;
+  padding-left: 6px;
 }
 
 .game-name {
@@ -112,6 +121,61 @@ body {
 
 .game-status.running { color: #4caf50; }
 .game-status.locked-status { color: #444; }
+.game-status.unlockable { color: #ffd700; }
+
+/* ── Table actions ── */
+.table-actions {
+  min-height: 28px;
+}
+
+.table-buy-btn {
+  width: 100%;
+  background: #1a1a30;
+  border: 1px solid #ffd700;
+  border-radius: 4px;
+  color: #ffd700;
+  font-size: 10px;
+  font-family: 'Courier New', monospace;
+  letter-spacing: 1px;
+  padding: 5px 8px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: background 0.2s;
+}
+
+.table-buy-btn:hover:not(.disabled) {
+  background: #2a2a50;
+}
+
+.table-buy-btn.disabled {
+  border-color: #333;
+  color: #555;
+  cursor: not-allowed;
+}
+
+.table-buy-btn.unlock-btn {
+  border-color: #4caf50;
+  color: #4caf50;
+}
+
+.table-buy-btn.unlock-btn:hover {
+  background: #1a2a1a;
+}
+
+.btn-cost {
+  color: inherit;
+  opacity: 0.8;
+}
+
+.locked-hint {
+  font-size: 9px;
+  color: #444;
+  text-align: center;
+  padding: 6px 0;
+  letter-spacing: 1px;
+}
 
 /* ── RTP meter ── */
 .rtp-row {

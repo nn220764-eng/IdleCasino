@@ -4,8 +4,6 @@ export function addCoins(state, amount) {
   state.coins += amount
 }
 
-// coinsPerSec: sum of (expectedCoinPerRound / intervalSec) across all games
-// Called on tab focus to calculate offline earnings
 export function calcOfflineIncome(state) {
   const now = Date.now()
   if (!state.lastActiveTime) {
@@ -20,16 +18,13 @@ export function calcOfflineIncome(state) {
   return earned
 }
 
-// Update coinsPerSec whenever params change (called after each upgrade)
+// Update coinsPerSec based on table counts × expected value per table
 export function updateCoinsPerSec(state, params) {
-  const bjEV = params.bj.bet * 0.005  // BJ house edge ~0.5%
-  const slotEV = params.slots.bet * 0.05  // Slot house edge ~5%
-  const rouEV = params.roulette.bet * 0.027  // Roulette house edge ~2.7%
-    + params.roulette.cornerBet * 0.027
-
-  const bjRate = bjEV / (params.bj.interval / 1000)
-  const slotRate = slotEV / (params.slots.interval / 1000)
-  const rouRate = rouEV / (params.roulette.interval / 1000)
+  const bjRate   = state.tables.bj       * (params.bj.bet * 0.005)      / (params.bj.interval / 1000)
+  const slotRate = state.tables.slots    * (params.slots.bet * 0.05)     / (params.slots.interval / 1000)
+  const rouRate  = state.tables.roulette * (
+    (params.roulette.bet + params.roulette.cornerBet) * 0.027
+  ) / (params.roulette.interval / 1000)
 
   state.coinsPerSec = bjRate + slotRate + rouRate
 }

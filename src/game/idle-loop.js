@@ -12,14 +12,16 @@ import { updateRTPMeter } from '../ui/rtp-meter.js'
 
 // --- State ---
 export const state = {
-  coins: 1000,
+  coins: 500,
   coinsPerSec: 0,
   lastActiveTime: Date.now(),
   purchased: [],        // upgrade IDs
   rtp: { bj: [], slots: [], roulette: [] },  // ring buffers (win amounts)
   bets: { bj: [], slots: [], roulette: [] }, // ring buffers (bet amounts)
   rtpIndex: { bj: 0, slots: 0, roulette: 0 },
-  rtpBaseline: { bj: null, slots: null, roulette: null }, // snapshot at last upgrade
+  rtpBaseline: { bj: null, slots: null, roulette: null },
+  tables: { bj: 1, slots: 0, roulette: 0 },
+  tableCosts: { bj: 1000, slots: 3000, roulette: 5000 },
 }
 
 // --- Game params (mutable by upgrades) ---
@@ -29,7 +31,8 @@ export const params = {
   roulette: { bet: 50, interval: 5000, cornerBet: 0 },
 }
 
-const gameLoops = { bj: null, slots: null, roulette: null }
+const GAMES = ['bj', 'slots', 'roulette']
+const gameLoops = { bj: [], slots: [], roulette: [] }
 const RTP_WINDOW = 100
 
 // --- RTP ring buffer ---
@@ -79,10 +82,9 @@ function renderBjCards(playerHand, dealerHand) {
 
 function bjTick() {
   const result = bjRound({ bet: params.bj.bet, numDecks: params.bj.numDecks })
-  // houseNet > 0 = casino wins (coins earned), < 0 = casino loses
-  const houseGain = result.playerNet  // playerNet in BJ engine = house's gain
+  const houseGain = result.playerNet
   addCoins(state, houseGain)
-  recordRound('bj', houseGain + params.bj.bet, params.bj.bet)  // win = bet+gain for RTP calc
+  recordRound('bj', houseGain + params.bj.bet, params.bj.bet)
 
   const won = houseGain > 0
   const label = won ? `BJ WIN +${houseGain}` : houseGain === 0 ? 'BJ PUSH' : `BJ LOSE ${houseGain}`
@@ -101,8 +103,6 @@ function slotsTick() {
   addCoins(state, result.houseNet)
   recordRound('slots', result.payout, params.slots.bet)
 
-  const won = result.houseNet < 0  // house loses = player (slot machine customer) wins = casino still profits from edge over time
-  // From house perspective: houseNet > 0 = we collected more than we paid = profit
   const houseWon = result.houseNet >= 0
   const label = houseWon
     ? `SLOTS +${result.houseNet} | ${result.reels.join('')}`
@@ -140,17 +140,44 @@ function rouletteTick() {
 }
 
 // --- Loop management ---
-function startGame(game) {
-  if (gameLoops[game]) clearInterval(gameLoops[game])
+const TICKS = { bj: bjTick, slots: slotsTick, roulette: rouletteTick }
 
-  const tick = { bj: bjTick, slots: slotsTick, roulette: rouletteTick }[game]
-  gameLoops[game] = setInterval(tick, params[game === 'bj' ? 'bj' : game].interval)
+function startTable(game, _tableIndex) {
+  const id = setInterval(TICKS[game], params[game].interval)
+  gameLoops[game].push(id)
+  return id
+}
+
+function stopAllTables(game) {
+  gameLoops[game].forEach(id => clearInterval(id))
+  gameLoops[game] = []
+}
+
+function startAllTables(game) {
+  stopAllTables(game)
+  for (let i = 0; i < state.tables[game]; i++) {
+    startTable(game, i)
+  }
 }
 
 function startAllGames() {
-  startGame('bj')
-  startGame('slots')
-  startGame('roulette')
+  for (const game of GAMES) {
+    startAllTables(game)
+  }
+}
+
+// --- Table purchase ---
+export function buyTable(game) {
+  const cost = state.tableCosts[game]
+  if (state.coins < cost) return false
+  addCoins(state, -cost)
+  state.tables[game]++
+  state.tableCosts[game] = Math.floor(cost * 1.8)
+  startTable(game, state.tables[game] - 1)
+  updateCoinsPerSec(state, params)
+  forceSave(serializeState())
+  render(state, params)
+  return true
 }
 
 // --- Upgrade purchase ---
@@ -164,12 +191,11 @@ export function buyUpgrade(id) {
   upgrade.apply(params)
   state.purchased.push(id)
 
-  // Snapshot current RTP as new baseline
-  const game = upgrade.game === 'bj' ? 'bj' : upgrade.game
+  const game = upgrade.game
   state.rtpBaseline[game] = calcRTP(game)
 
-  // Restart the affected game loop with new interval
-  startGame(upgrade.game === 'bj' ? 'bj' : upgrade.game)
+  // Restart all tables for this game with the new interval
+  startAllTables(game)
 
   updateCoinsPerSec(state, params)
   forceSave(serializeState())
@@ -188,6 +214,8 @@ function serializeState() {
     bets: state.bets,
     rtpIndex: state.rtpIndex,
     rtpBaseline: state.rtpBaseline,
+    tables: state.tables,
+    tableCosts: state.tableCosts,
   }
 }
 
@@ -203,9 +231,13 @@ export function init() {
   const saved = loadState()
   if (saved) {
     Object.assign(state, saved)
+    // Backwards-compatibility: old saves have no tables field
+    if (!saved.tables) {
+      state.tables = { bj: 1, slots: 0, roulette: 0 }
+      state.tableCosts = { bj: 1000, slots: 3000, roulette: 5000 }
+    }
     applyPurchased()
 
-    // Offline income
     const earned = calcOfflineIncome(state)
     if (earned > 0) {
       addCoins(state, earned)
@@ -216,7 +248,6 @@ export function init() {
   updateCoinsPerSec(state, params)
   startAllGames()
 
-  // Force-save on tab hide, update lastActiveTime
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) {
       state.lastActiveTime = Date.now()
