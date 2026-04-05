@@ -57,6 +57,26 @@ function rtpDelta(game) {
 }
 
 // --- Game tick handlers ---
+const RED_SUITS = new Set(['♥', '♦'])
+
+function renderBjCards(playerHand, dealerHand) {
+  const playerEl = document.getElementById('player-cards')
+  const dealerEl = document.getElementById('dealer-cards')
+  if (playerEl) {
+    playerEl.innerHTML = playerHand.map(c => {
+      const red = RED_SUITS.has(c.suit) ? ' red' : ''
+      return `<div class="card${red}">${c.rank}</div>`
+    }).join('')
+  }
+  if (dealerEl) {
+    dealerEl.innerHTML = dealerHand.map((c, i) => {
+      if (i === 1) return `<div class="card face-down">?</div>`
+      const red = RED_SUITS.has(c.suit) ? ' red' : ''
+      return `<div class="card${red}">${c.rank}</div>`
+    }).join('')
+  }
+}
+
 function bjTick() {
   const result = bjRound({ bet: params.bj.bet, numDecks: params.bj.numDecks })
   // houseNet > 0 = casino wins (coins earned), < 0 = casino loses
@@ -67,6 +87,8 @@ function bjTick() {
   const won = houseGain > 0
   const label = won ? `BJ WIN +${houseGain}` : houseGain === 0 ? 'BJ PUSH' : `BJ LOSE ${houseGain}`
   appendLog('bj', label, won, calcRTP('bj'), rtpDelta('bj'))
+
+  renderBjCards(result.playerHand, result.dealerHand)
 
   maybeSave(serializeState())
   render(state, params)
