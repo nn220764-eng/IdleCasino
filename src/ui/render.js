@@ -16,6 +16,8 @@ export function render(state, params) {
   // Income per second
   const ips = document.getElementById('income-per-sec')
   if (ips) ips.textContent = `+${state.coinsPerSec.toFixed(1)} /s`
+  const ipsPanel = document.getElementById('income-per-sec-panel')
+  if (ipsPanel) ipsPanel.textContent = `+${state.coinsPerSec.toFixed(1)} /s`
 
   // RTP meters (only update if we have data)
   // Meters are updated via appendLog which calls updateRTPMeter directly
